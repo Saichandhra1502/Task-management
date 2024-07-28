@@ -1,0 +1,32 @@
+let HTTP_CONSTANTS = {
+    OK: 200,
+    CREATED: 201,
+    BAD_REQUEST: 400,
+    UNAUTHORIZED: 401,
+    FORBIDDEN: 403,
+    NOT_FOUND: 404,
+    DUPLICATE: 409,
+    INTERNAL_SERVER_ERROR: 500,
+    SERVICE_UNAVAILABLE: 503,
+    NOT_ACCEPTABLE: 406
+};
+
+let COLLECTION_STATUS = {
+    ACTIVE: 'ACTIVE',
+    INACTIVE: 'INACTIVE'
+}
+
+let COLLECTION_NAMES={
+    ORGANISATIONS:'organisations',
+    USERS:'users',
+    ROLES:'roles',
+    TASKS:'tasks',
+    ACCESS_RIGHTS:'access-rights',
+    USER_HIERARCHY:'user-hierarchies'
+}
+
+module.exports = {
+    HTTP_CONSTANTS,
+    COLLECTION_STATUS,
+    COLLECTION_NAMES
+}
