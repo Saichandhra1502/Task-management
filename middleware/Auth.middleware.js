@@ -28,7 +28,7 @@ class AuthMiddleware extends Base {
             let tokenHeader = req.headers['authorization'];
             if (tokenHeader) {
                 let token = await tokenHeader.split(' ');
-                let decoded = jwt.verify(token[1],'ff2958c225c2d4da14e750a851a2a26bf1b805bf1d3f3a9ccff485be3ee58db4');
+                let decoded = jwt.verify(token[1],process.env.JWT_SECRET);
                 if (decoded) {
                     const getMasterDBConnection = await getAdminConnection();
 

@@ -3,7 +3,7 @@ const OrganisationService = require('./Organisations.service')
 class OrganisationController {
     async createOrganisation(req, res) {
         try {
-            const response = await OrganisationService.createOrganisation(req.body, req.masterConnection)
+            const response = await OrganisationService.createOrganisation(req.body)
             if (!response)
                 return res.status(500).json({
                     status: false,

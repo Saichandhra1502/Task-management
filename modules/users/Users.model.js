@@ -28,8 +28,11 @@ const UsersSchema = new mongoose.Schema({
     }
 }, { timestamps: 1 })
 
+const UsersModel = mongoose.model('users', UsersSchema);
+
+
 const schemaObj = {
     name: 'users',
     schema: UsersSchema
 }
-module.exports = { UsersSchema, schemaObj }
+module.exports = { UsersModel, schemaObj }

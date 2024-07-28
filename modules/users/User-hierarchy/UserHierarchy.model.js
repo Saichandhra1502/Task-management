@@ -20,8 +20,11 @@ const UserHierarchySchema = new mongoose.Schema({
     }
 }, { timestamps: 1 })
 
+const UserHierarchyModel = mongoose.model('user-hierarchies', this.UserHierarchyModel);
+
+
 const schemaObj = {
     name: 'user-hierarchies',
     schema: UserHierarchySchema
 }
-module.exports = { UserHierarchySchema, schemaObj }
+module.exports = { UserHierarchyModel, schemaObj }

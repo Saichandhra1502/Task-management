@@ -25,8 +25,11 @@ const AccessRightsSchema = new mongoose.Schema({
     }
 }, { timestamps: 1 })
 
+const AccessRightsModel = mongoose.model('access-rights', AccessRightsSchema);
+
+
 const schemaObj = {
     name: 'access-rights',
     schema: AccessRightsSchema
 }
-module.exports = { AccessRightsSchema, schemaObj }
+module.exports = { AccessRightsModel, schemaObj }

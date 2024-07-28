@@ -26,8 +26,11 @@ const RolesSchema = new mongoose.Schema({
     }
 }, { timestamps: 1 })
 
+const RolesModel = mongoose.model('roles', RolesSchema);
+
+
 const schemaObj = {
     name: 'roles',
     schema: RolesSchema
 }
-module.exports = { RolesSchema, schemaObj }
+module.exports = { RolesModel, schemaObj }

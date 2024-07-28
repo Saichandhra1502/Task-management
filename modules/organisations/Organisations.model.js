@@ -23,8 +23,11 @@ const OrganisationSchema = new mongoose.Schema({
 	},
 }, { timestamps: 1 })
 
+const OrganisationModel = mongoose.model('organisations', OrganisationSchema);
+
+
 const schemaObj = {
     name: 'organisations',
     schema: OrganisationSchema
 }
-module.exports = { OrganisationSchema, schemaObj }
+module.exports = { OrganisationModel, schemaObj }

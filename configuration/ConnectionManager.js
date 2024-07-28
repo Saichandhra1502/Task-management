@@ -1,7 +1,6 @@
 // const { BASE_DB_URI, ADMIN_DB_NAME, SERVER, DATABASE } = require('../config');
 const { initAdminDbConnection } = require('./Admin');
 const { initTenantDbConnection } = require('./Tenant');
-const OrganisationService=require('../modules/organisations/Organisations.service')
 
 class ConnectionManager  {
 
@@ -19,11 +18,13 @@ class ConnectionManager  {
 		return new Promise(async (resolve, reject) => {
 			try {
 				let tenants = [];
+				console.log(process.env.BASE_DB_URI);
+				console.log(process.env.ADMIN_DB_NAME);
 				let ADMIN_DB_URI = `${process.env.BASE_DB_URI}/${process.env.ADMIN_DB_NAME}`;
 
 				this.adminDbConnection = await initAdminDbConnection(ADMIN_DB_URI, {
 					socketTimeoutMS: 30000,
-					keepAlive: true,
+					// keepAlive: true,
 					useNewUrlParser: true,
 					useUnifiedTopology: true,
 					maxPoolSize: 100,
@@ -34,7 +35,8 @@ class ConnectionManager  {
 					throw new CustomError('Error while connecting to master database', HTTP_STATUS.INTERNAL_SERVER_ERROR);
 				}
 				
-				tenants = await OrganisationService.getOrganisations(this.adminDbConnection);
+				tenants = await this.getOrganisation(this.adminDbConnection);
+				console.log(tenants);
 				let connections = {};
 				for (let i = 0; i < tenants.length; i++) {
 					let tenantDBURI = tenants[i]['dbURI'];
@@ -42,7 +44,7 @@ class ConnectionManager  {
 						console.log(`Inside ConnectionManager: connectAllDb method: Connecting to Tenant DB ${tenants[i].name}`)
 						let tenantDBConnection = await initTenantDbConnection(tenantDBURI, {
 							socketTimeoutMS: 30000,
-							keepAlive: true,
+							// keepAlive: true,
 							useNewUrlParser: true,
 							useUnifiedTopology: true,
 							maxPoolSize: 100,
@@ -102,6 +104,17 @@ class ConnectionManager  {
 		}
 		return null;
 	};
+
+	async getOrganisation(masterConnection) {
+        try {
+            const OrganisationModelAtMaster = masterConnection.model(COLLECTION_NAMES.ORGANISATIONS)
+            const doesOrganisationsExist = await OrganisationModelAtMaster.find()
+
+           return doesOrganisationsExist
+        } catch (error) {
+            throw new CustomError(`Error while fetching organisations,${error}`, 500)
+        }
+    }
 }
 
 module.exports=new ConnectionManager()

@@ -41,8 +41,11 @@ const TasksSchema = new mongoose.Schema({
     }
 }, { timestamps: 1 })
 
+const TaskModel = mongoose.model('tasks', TasksSchema);
+
+
 const schemaObj = {
     name: 'tasks',
     schema: TasksSchema
 }
-module.exports = { TasksSchema, schemaObj }
+module.exports = { TaskModel, schemaObj }
