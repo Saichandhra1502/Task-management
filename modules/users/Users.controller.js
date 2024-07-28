@@ -29,6 +29,18 @@ class UserController {
             })
         }
     }
+
+    async login(req, res) {
+        try {
+            const response = await UsersService.login( req.body,req.headers)
+            return res.status(200).json(response)
+        } catch (error) {
+            return res.status(500).json({
+                status: false,
+                message: error
+            })
+        }
+    }
 }
 
 module.exports = new UserController()
