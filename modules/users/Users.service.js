@@ -1,10 +1,58 @@
 const UserHierarchyService = require('./User-hierarchy/UserHierarchy.service')
 const { getTenantDbConnection, getAdminConnection } = require('../../configuration/ConnectionManager')
+const OrganisationsService = require('../organisations/Organisations.service')
 const { COLLECTION_NAMES, HTTP_CONSTANTS, COLLECTION_STATUS } = require('../../configuration/Constants')
 const bcrypt = require('bcrypt')
-const jwt=require('jsonwebtoken')
+const jwt = require('jsonwebtoken')
+const CustomError = require('../../configuration/CustomError')
 
 class UsersService {
+    async createAdminUser(payload) {
+        try {
+            const masterConnection = getAdminConnection()
+            let tenantConnection = ''
+
+            //Create organisation
+            let organisationPaylod = {
+                name: payload.organisationName,
+                description: payload.description
+            }
+            console.log(organisationPaylod);
+            const doesOrganisationCreated = await OrganisationsService.createOrganisation(organisationPaylod, masterConnection)
+            if (!doesOrganisationCreated)
+                throw new CustomError('Error while creating organisation', HTTP_CONSTANTS.INTERNAL_SERVER_ERROR)
+            else tenantConnection = doesOrganisationCreated.tenant
+
+
+            const UserModel = tenantConnection.model('users')
+
+            //Check for any duplicate user
+            const doesUserExist = await UserModel.findOne({ email: payload.email.trim() })
+            if (doesUserExist)
+                throw new CustomError('Role already exist', 409)
+
+            payload.organisationId = doesOrganisationCreated.oragnisationId
+
+            payload.password = bcrypt.hashSync(payload.password, 8)
+
+            //Create role
+            const createdUser = await new UserModel(payload).save()
+
+            //Create user hierarchy
+            let userHierarchyPayload = {
+                childUserId: createdUser._id,
+                parentUserId: payload.parentUserId
+            }
+            await UserHierarchyService.createUserHierarchy(userHierarchyPayload, tenantConnection, token)
+
+            return {
+                status: true,
+                message: 'User created!'
+            }
+        } catch (error) {
+            throw new CustomError('Error while creating new user', 500)
+        }
+    }
 
     async createUser(payload, tenantConnection, token) {
         try {
@@ -47,7 +95,7 @@ class UsersService {
             //Find all the users
             const doesUsersExists = await UserModel
                 .find({ organisationId: token.organisationId })
-                .select({password:0})
+                .select({ password: 0 })
                 .sort({ 'createdAt': -1 })
                 .skip((page) * pagination)
                 .limit(pagination)
@@ -68,11 +116,11 @@ class UsersService {
         try {
             const masterConnection = getAdminConnection()
             const OrganisationModelAtMaster = masterConnection.model(COLLECTION_NAMES.ORGANISATIONS)
-            const doesOrganisationExist = await OrganisationModelAtMaster.findOne({ name: headers.organisationName })
+            const doesOrganisationExist = await OrganisationModelAtMaster.findOne({ name: headers.organisationname })
             if (!doesOrganisationExist)
                 throw new CustomError('Organisation not found', 404)
 
-            const tenantConnection = getTenantDbConnection({ organisationName: doesOrganisationExist.name, dbURL: doesOrganisationExist.dbURL })
+            const tenantConnection =await getTenantDbConnection({ name: doesOrganisationExist.name, dbURL: doesOrganisationExist.dbURL })
             if (tenantConnection) {
                 const UserModel = tenantConnection.model(COLLECTION_NAMES.USERS)
                 const doesUserExist = await UserModel.findOne({ email: payload.email }).lean()
@@ -83,20 +131,21 @@ class UsersService {
 
                 const doesPasswordMatched = await bcrypt.compare(payload.password, doesUserExist.password);
                 if (!doesPasswordMatched)
-                    throw new CustomError('Incorrect password',HTTP_CONSTANTS.FORBIDDEN)
+                    throw new CustomError('Incorrect password', HTTP_CONSTANTS.FORBIDDEN)
 
                 delete doesUserExist.password
 
-                let token= jwt.sign(doesUserExist, process.env.JWT_SECRET, { expiresIn: '1d' });    
+                let token = jwt.sign(doesUserExist, process.env.JWT_SECRET, { expiresIn: '1d' });
 
                 return {
-                    status:true,
-                    message:'User logged in successfully',
-                    token:token
+                    status: true,
+                    message: 'User logged in successfully',
+                    token: token
                 }
-                
+
             }
         } catch (error) {
+            throw new CustomError(`Error while logging in ${error}`, 500)
 
         }
     }

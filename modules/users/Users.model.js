@@ -8,11 +8,11 @@ const UsersSchema = new mongoose.Schema({
         type: String
     },
     countryCode: {
-        type: STring
+        type: String
     },
     email: {
         type: String,
-        trim:trim
+        trim:true
     },
     password: {
         type: String
@@ -25,8 +25,12 @@ const UsersSchema = new mongoose.Schema({
         type: String,
         enum: ['ACTIVE', 'INACTIVE'],
         default:'ACTIVE'
+    },
+    createdAt:{
+        type:Date,
+        default:Date.now()
     }
-}, { timestamps: 1 })
+})
 
 const UsersModel = mongoose.model('users', UsersSchema);
 

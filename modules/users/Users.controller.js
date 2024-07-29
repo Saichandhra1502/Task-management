@@ -1,6 +1,24 @@
 const UsersService=require('./Users.service')
 
 class UserController {
+
+    async createAdminUser(req, res) {
+        try {
+            const response = await UsersService.createAdminUser(req.body)
+            if (!response)
+                return res.status(500).json({
+                    status: false,
+                    message: 'Error while creating admin user'
+                })
+            return res.status(201).json(response)
+        } catch (error) {
+            return res.status(500).json({
+                status: false,
+                message: error
+            })
+        }
+    }
+
     async createUser(req, res) {
         try {
             const response = await UsersService.createUser(req.body, req.tenantConnection, req.token)

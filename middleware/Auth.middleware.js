@@ -1,7 +1,6 @@
 const jwt = require('jsonwebtoken');
-const HTTP_STATUS = require('../constants/http-status/HTTP.constants');
-const Base = require('./Base');
-const { getAdminConnection, getConnectionByTenant } = require('./multi-tenant/connectionManager');
+const {HTTP_STATUS} = require('../configuration/Constants');
+const { getAdminConnection, getConnectionByTenant } = require('../configuration/ConnectionManager');
 const USER_CONSTANTS = require('../modules/users/Users.constants');
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -11,10 +10,7 @@ const USER_CONSTANTS = require('../modules/users/Users.constants');
  * @returns middleware class
  */
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-class AuthMiddleware extends Base {
-    constructor() {
-        super();
-    }
+class AuthMiddleware  {
 
     /**
      * @module AuthMiddleware:authenticate

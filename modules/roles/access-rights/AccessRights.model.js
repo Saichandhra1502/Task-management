@@ -22,8 +22,12 @@ const AccessRightsSchema = new mongoose.Schema({
     createdBy: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'users'
+    },
+    createdAt:{
+        type:Date,
+        default:Date.now()
     }
-}, { timestamps: 1 })
+} )
 
 const AccessRightsModel = mongoose.model('access-rights', AccessRightsSchema);
 

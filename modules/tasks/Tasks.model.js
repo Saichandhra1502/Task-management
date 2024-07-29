@@ -1,19 +1,19 @@
 const mongoose = require('mongoose')
 
 const TasksSchema = new mongoose.Schema({
-    title:{
-        type:String
+    title: {
+        type: String
     },
     description: {
         type: String,
-        trim:true
+        trim: true
     },
     dueDate: {
         type: Date
     },
-    type:{
-        type:String,
-        enum:['CALL','EMAIL','MEETING']
+    type: {
+        type: String,
+        enum: ['CALL', 'EMAIL', 'MEETING']
     },
     status: {
         type: String,
@@ -28,7 +28,7 @@ const TasksSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'organisations'
     },
-    createdBy:{
+    createdBy: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'users'
     },
@@ -38,8 +38,12 @@ const TasksSchema = new mongoose.Schema({
     },
     completedDate: {
         type: Date
+    },
+    createdAt: {
+        type: Date,
+        default: Date.now()
     }
-}, { timestamps: 1 })
+})
 
 const TaskModel = mongoose.model('tasks', TasksSchema);
 

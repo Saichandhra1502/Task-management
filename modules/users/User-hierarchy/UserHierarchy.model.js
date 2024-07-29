@@ -17,8 +17,12 @@ const UserHierarchySchema = new mongoose.Schema({
     organisationId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'organisations'
+    },
+    createdAt:{
+        type:Date,
+        default:Date.now()
     }
-}, { timestamps: 1 })
+})
 
 const UserHierarchyModel = mongoose.model('user-hierarchies', this.UserHierarchyModel);
 

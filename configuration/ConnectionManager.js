@@ -1,10 +1,12 @@
 // const { BASE_DB_URI, ADMIN_DB_NAME, SERVER, DATABASE } = require('../config');
 const { initAdminDbConnection } = require('./Admin');
 const { initTenantDbConnection } = require('./Tenant');
+const CustomError = require('./CustomError')
+const { COLLECTION_NAMES } = require('./Constants')
 
-class ConnectionManager  {
+class ConnectionManager {
 
-    constructor() {
+	constructor() {
 		this.connectionMap;
 		this.adminConnection;
 	}
@@ -18,15 +20,13 @@ class ConnectionManager  {
 		return new Promise(async (resolve, reject) => {
 			try {
 				let tenants = [];
-				console.log(process.env.BASE_DB_URI);
-				console.log(process.env.ADMIN_DB_NAME);
 				let ADMIN_DB_URI = `${process.env.BASE_DB_URI}/${process.env.ADMIN_DB_NAME}`;
 
 				this.adminDbConnection = await initAdminDbConnection(ADMIN_DB_URI, {
 					socketTimeoutMS: 30000,
 					// keepAlive: true,
-					useNewUrlParser: true,
-					useUnifiedTopology: true,
+					// useNewUrlParser: true,
+					// useUnifiedTopology: true,
 					maxPoolSize: 100,
 					serverSelectionTimeoutMS: 5000
 				});
@@ -34,22 +34,21 @@ class ConnectionManager  {
 				if (!this.adminDbConnection) {
 					throw new CustomError('Error while connecting to master database', HTTP_STATUS.INTERNAL_SERVER_ERROR);
 				}
-				
-				tenants = await this.getOrganisation(this.adminDbConnection);
-				console.log(tenants);
+
+				tenants = await this.getOrganisations(this.adminDbConnection);
 				let connections = {};
 				for (let i = 0; i < tenants.length; i++) {
-					let tenantDBURI = tenants[i]['dbURI'];
+					let tenantDBURI = tenants[i]['dbURL'];
 					try {
 						console.log(`Inside ConnectionManager: connectAllDb method: Connecting to Tenant DB ${tenants[i].name}`)
 						let tenantDBConnection = await initTenantDbConnection(tenantDBURI, {
 							socketTimeoutMS: 30000,
 							// keepAlive: true,
-							useNewUrlParser: true,
-							useUnifiedTopology: true,
+							// useNewUrlParser: true,
+							// useUnifiedTopology: true,
 							maxPoolSize: 100,
 							serverSelectionTimeoutMS: 5000
-						});
+						}, tenants[i]['name']);
 
 						if (tenantDBConnection) connections[tenants[i]['organisationName']] = tenantDBConnection;
 					} catch (error) {
@@ -74,16 +73,30 @@ class ConnectionManager  {
 		console.log('Inside ConnectionManager: getTenantDbConnection method');
 		try {
 			if (!tenant) return null;
-			const conn = await initTenantDbConnection(tenant.dbURL);
+			const conn = await initTenantDbConnection(tenant.dbURL, {
+				socketTimeoutMS: 30000,
+				// keepAlive: true,
+				// useNewUrlParser: true,
+				// useUnifiedTopology: true,
+				maxPoolSize: 100,
+				serverSelectionTimeoutMS: 5000
+			}, tenant.name);
 			if (conn) {
-				this.connectionMap[tenant.organisationName] = conn;
-				return this.connectionMap[tenant.organisationName];
+				this.connectionMap[tenant.name] = conn;
+				return this.connectionMap[tenant.name];
 			} else {
 				await this.connectAllDb();
-				const conn = await initTenantDbConnection(tenant.dbURL);
+				const conn = await initTenantDbConnection(tenant.dbURL, {
+					socketTimeoutMS: 30000,
+					// keepAlive: true,
+					// useNewUrlParser: true,
+					// useUnifiedTopology: true,
+					maxPoolSize: 100,
+					serverSelectionTimeoutMS: 5000
+				}, tenant.name);
 				if (conn) {
-					this.connectionMap[tenant.organisationName] = conn;
-					return this.connectionMap[tenant.organisationName];
+					this.connectionMap[tenant.name] = conn;
+					return this.connectionMap[tenant.name];
 				}
 			}
 		} catch (error) {
@@ -91,7 +104,7 @@ class ConnectionManager  {
 		}
 	};
 
-	
+
 	/**
 	 * @method ConnectionManager:getAdminConnection
 	 * @description Get master database connection
@@ -105,16 +118,16 @@ class ConnectionManager  {
 		return null;
 	};
 
-	async getOrganisation(masterConnection) {
-        try {
-            const OrganisationModelAtMaster = masterConnection.model(COLLECTION_NAMES.ORGANISATIONS)
-            const doesOrganisationsExist = await OrganisationModelAtMaster.find()
+	async getOrganisations(masterConnection) {
+		try {
+			const OrganisationModelAtMaster = masterConnection.model(COLLECTION_NAMES.ORGANISATIONS)
+			const doesOrganisationsExist = await OrganisationModelAtMaster.find()
 
-           return doesOrganisationsExist
-        } catch (error) {
-            throw new CustomError(`Error while fetching organisations,${error}`, 500)
-        }
-    }
+			return doesOrganisationsExist
+		} catch (error) {
+			throw new CustomError(`Error while fetching organisations,${error}`, 500)
+		}
+	}
 }
 
-module.exports=new ConnectionManager()
+module.exports = new ConnectionManager()

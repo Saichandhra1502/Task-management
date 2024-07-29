@@ -21,7 +21,11 @@ const OrganisationSchema = new mongoose.Schema({
 		type: String,
 		default: () => uuidv4(),
 	},
-}, { timestamps: 1 })
+    createdAt:{
+        type:Date,
+        default:Date.now()
+    }
+})
 
 const OrganisationModel = mongoose.model('organisations', OrganisationSchema);
 
