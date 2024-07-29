@@ -4,9 +4,6 @@ class AccessRightsService {
         try {
             const AccessRightsModel = tenantConnection.model('access-rights')
 
-            //Trim the given role name and convert it to Upper case and store it as code
-            payload.code = payload.name.trim().toUppercase()
-
             //Check any for duplicate access right 
             const doesAccessRightsExits = await AccessRightsModel.findOne({ code: payload.code })
             if (doesAccessRightsExits)

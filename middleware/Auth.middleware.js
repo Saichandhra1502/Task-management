@@ -1,7 +1,8 @@
 const jwt = require('jsonwebtoken');
-const {HTTP_STATUS} = require('../configuration/Constants');
-const { getAdminConnection, getConnectionByTenant } = require('../configuration/ConnectionManager');
+const {HTTP_CONSTANTS,COLLECTION_NAMES, COLLECTION_STATUS} = require('../configuration/Constants');
+const { getAdminConnection, getTenantDbConnection } = require('../configuration/ConnectionManager');
 const USER_CONSTANTS = require('../modules/users/Users.constants');
+const CustomError = require('../configuration/CustomError');
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 /**
@@ -20,7 +21,6 @@ class AuthMiddleware  {
      */
     async authenticate(req, res, next) {
         try {
-            this.logger.info('Inside AuthMiddleware: authenticate method');
             let tokenHeader = req.headers['authorization'];
             if (tokenHeader) {
                 let token = await tokenHeader.split(' ');
@@ -29,21 +29,25 @@ class AuthMiddleware  {
                     const getMasterDBConnection = await getAdminConnection();
 
                     req.masterConnection = getMasterDBConnection;
-                    let dbConnection = await getConnectionByTenant(decoded.organisationName);
+                    const OrganisationModelAtMaster=req.masterConnection.model(COLLECTION_NAMES.ORGANISATIONS)
+                    const doesOrganisationExist=await OrganisationModelAtMaster.findOne({name:decoded.organisationName,status:COLLECTION_STATUS.ACTIVE})
+                    if(!doesOrganisationExist)
+                        throw new CustomError('Organisation not found',HTTP_CONSTANTS.NOT_FOUND)
+
+                    let dbConnection = await getTenantDbConnection({name:decoded.organisationName,dbURL:doesOrganisationExist.dbURL});
                     if (dbConnection)
-                        req['tenantConnection'] = dbConnection.db;
+                        req['tenantConnection'] = dbConnection;
                     req.token = decoded;
 
                     return next();
                 } else {
-                    return res.status(HTTP_STATUS.UNAUTHORIZED).json({ status: HTTP_STATUS.UNAUTHORIZED, message: USER_CONSTANTS.USER_SESSION_EXPIRED });
+                    return res.status(HTTP_CONSTANTS.UNAUTHORIZED).json({ status: HTTP_CONSTANTS.UNAUTHORIZED, message: USER_CONSTANTS.USER_SESSION_EXPIRED });
                 }
             } else {
-                return res.status(HTTP_STATUS.UNAUTHORIZED).json({ status: HTTP_STATUS.UNAUTHORIZED, message: USER_CONSTANTS.USER_AUTH_TOKEN_REQUIRED });
+                return res.status(HTTP_CONSTANTS.UNAUTHORIZED).json({ status: HTTP_CONSTANTS.UNAUTHORIZED, message: USER_CONSTANTS.USER_AUTH_TOKEN_REQUIRED });
             }
         } catch (error) {
-            this.logger.error('Inside AuthMiddleware: authenticate method:  Error occured while verifying JWT Token ', error);
-            return res.status(HTTP_STATUS.UNAUTHORIZED).json({ status: HTTP_STATUS.UNAUTHORIZED, message: USER_CONSTANTS.USER_SESSION_EXPIRED });
+            return res.status(HTTP_CONSTANTS.UNAUTHORIZED).json({ status: HTTP_CONSTANTS.UNAUTHORIZED, message: USER_CONSTANTS.USER_SESSION_EXPIRED });
         }
     }
 }

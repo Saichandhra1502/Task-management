@@ -6,7 +6,7 @@ class RolesService {
             const RoleModel = tenantConnection.model('roles')
 
             //Trim the given role name and convert it to Upper case and store it as code
-            payload.code = payload.name.trim().toUppercase()
+            payload.code = payload.name.trim().toUpperCase()
 
             //Check for any duplicate role
             const doesRoleExist = await RoleModel.findOne({ code: payload.code })
@@ -24,7 +24,8 @@ class RolesService {
                 message: 'Role created!'
             }
         } catch (error) {
-            throw new CustomError('Error while creating new role', 500)
+            console.log(error);
+            throw new CustomError(`Error while creating new role ${error.message}`, 500)
         }
     }
 

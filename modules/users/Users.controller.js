@@ -31,7 +31,7 @@ class UserController {
         } catch (error) {
             return res.status(500).json({
                 status: false,
-                message: error
+                message: error.message
             })
         }
     }
@@ -43,7 +43,7 @@ class UserController {
         } catch (error) {
             return res.status(500).json({
                 status: false,
-                message: error
+                message: error.message
             })
         }
     }
@@ -55,7 +55,7 @@ class UserController {
         } catch (error) {
             return res.status(500).json({
                 status: false,
-                message: error
+                message: error.message
             })
         }
     }

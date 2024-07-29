@@ -41,7 +41,7 @@ class UsersService {
             //Create user hierarchy
             let userHierarchyPayload = {
                 childUserId: createdUser._id,
-                parentUserId: payload.parentUserId
+                parentUserId: null
             }
             await UserHierarchyService.createUserHierarchy(userHierarchyPayload, tenantConnection, token)
 
@@ -132,6 +132,8 @@ class UsersService {
                 const doesPasswordMatched = await bcrypt.compare(payload.password, doesUserExist.password);
                 if (!doesPasswordMatched)
                     throw new CustomError('Incorrect password', HTTP_CONSTANTS.FORBIDDEN)
+                  
+                doesUserExist.organisationName=doesOrganisationExist.name    
 
                 delete doesUserExist.password
 
