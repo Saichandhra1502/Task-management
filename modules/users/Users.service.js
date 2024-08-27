@@ -120,7 +120,7 @@ class UsersService {
             if (!doesOrganisationExist)
                 throw new CustomError('Organisation not found', 404)
 
-            const tenantConnection =await getTenantDbConnection({ name: doesOrganisationExist.name, dbURL: doesOrganisationExist.dbURL })
+            const tenantConnection = await getTenantDbConnection({ name: doesOrganisationExist.name, dbURL: doesOrganisationExist.dbURL })
             if (tenantConnection) {
                 const UserModel = tenantConnection.model(COLLECTION_NAMES.USERS)
                 const doesUserExist = await UserModel.findOne({ email: payload.email }).lean()
@@ -132,8 +132,8 @@ class UsersService {
                 const doesPasswordMatched = await bcrypt.compare(payload.password, doesUserExist.password);
                 if (!doesPasswordMatched)
                     throw new CustomError('Incorrect password', HTTP_CONSTANTS.FORBIDDEN)
-                  
-                doesUserExist.organisationName=doesOrganisationExist.name    
+
+                doesUserExist.organisationName = doesOrganisationExist.name
 
                 delete doesUserExist.password
 
@@ -149,6 +149,31 @@ class UsersService {
         } catch (error) {
             throw new CustomError(`Error while logging in ${error}`, 500)
 
+        }
+    }
+
+    async getReportees(userId, organisationId, tenantConnection) {
+        try {
+            let reporteesList = [];
+            let searchQuery = {
+                organisationId: mongoose.Types.ObjectId(organisationId),
+                status: COLLECTION_STATUS.ACTIVE
+            };
+            searchQuery = { ...searchQuery, ...{ parentUserId: (typeof userId === 'string') ? mongoose.Types.ObjectId(userId) : { $in: userId } } };
+            let UserHierarchiesModel = tenantConnection.model(COLLECTION_NAMES.USER_HIERARCHY);
+            let reportees = await UserHierarchiesModel.distinct('childUserId', searchQuery);
+            let reporteesIdsHolder = [];
+            if (reportees && reportees.length > 0)
+                reportees.forEach(async ele => { reporteesIdsHolder = [...reporteesIdsHolder, ele]; });
+
+            if (reporteesIdsHolder && reporteesIdsHolder.length > 0)
+                reporteesList = [...reporteesList, ...reporteesIdsHolder, ...await this.getReportees(reporteesIdsHolder, organisationId, tenantConnection)];
+            if (typeof (userId) === 'string')
+                reporteesList.push(new mongoose.Types.ObjectId(userId));
+            else reporteesList.concat(userId);
+            return reporteesList;
+        } catch (error) {
+            throw new CustomError(`Error while fetching  reportees : ${error.message}`, 500)
         }
     }
 }
